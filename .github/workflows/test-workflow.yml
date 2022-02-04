@@ -1,7 +1,7 @@
-name: Build release asset test
+name: Test Workflow
 on: 
   release:
-    types: [draft]
+    types: [published]
 jobs:
   build:
     name: Build release asset
