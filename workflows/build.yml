@@ -1,0 +1,42 @@
+name: Build release asset
+on: 
+  release:
+    types: [published]
+jobs:
+  build:
+    name: Build release asset
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Build
+        id: build
+        uses: thedoctor0/zip-release@master
+        with:
+          type: 'zip'
+          filename: 'woocommerce.zip'
+      - name: Upload release asset
+        id: upload_asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./woocommerce.zip
+          asset_name: woocommerce.zip
+          asset_content_type: application/zip
+      - name: LOG
+        run: echo "${{ github.repository }} - ${{ github.repository_owner }} - ${{ secrets.GITHUB_TOKEN }} - ${{ env.GITHUB_REPOSITORY }}"
+  run-release-smoke-tests:
+    name: Run Smoke test release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Invoke release smoke testing workflow
+        uses: aurelien-baudet/workflow-dispatch@v2
+        with:
+          workflow: Smoke test release
+          repo: ${{ github.repository }}
+          token: ${{ secrets.CUSTOM_GH_TOKEN }}
+          ref: refs/heads/main
+          inputs: '{ "release_id": "${{ github.event.release.id }}" }'
